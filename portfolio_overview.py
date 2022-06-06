@@ -32,6 +32,7 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+st.set_option('deprecation.showPyplotGlobalUse', False)
 
 # file_path = r'./data/ajax_collected_data_all.csv'
 # event_path = './data/event_data_v1/events/game_id={}'
@@ -44,7 +45,7 @@ class stock_calculation(object):
         self.foreign_stock = foreign_stock_list
         self.local_stock = local_stock_list
         self.crypto_stock = crypto_stock_list
-        self.date_execution = (datetime.today()-timedelta(days = 1)).strftime('%Y-%m-%d')
+        self.date_execution = (datetime.today()-timedelta(days = 30)).strftime('%Y-%m-%d')
         self.yf_pull_list = self.local_stock+self.foreign_stock
         self.consolidated_price = pd.DataFrame()
         
@@ -55,15 +56,30 @@ class stock_calculation(object):
     def data_pulling(self,share_dict):
         for ticker in self.yf_pull_list:
             stock_dataframe = self.yf_pull(ticker,date=self.date_execution)
+            
             stock_dataframe['Name'] = share_dict[ticker]['Name']
             stock_dataframe['Currency'] = share_dict[ticker]['currency']
             stock_dataframe['Holding'] = share_dict[ticker]['Unit']
             self.consolidated_price = pd.concat([self.consolidated_price,pd.DataFrame(stock_dataframe)],axis=0)
-        self.consolidated_price = self.consolidated_price.drop_duplicates(subset=['Name'],keep='last')
+        # self.consolidated_price = self.consolidated_price.drop_duplicates(subset=['Name'],keep='last')
+        print(self.consolidated_price)
+
+    def stock_graph_plotting(self):
+        for stock_n in self.consolidated_price['Name'].unique():
+            stock_data= self.consolidated_price[self.consolidated_price['Name'] == stock_n]
+            plt.figure(figsize=(20,12))
+            plt.xticks(rotation=90)
+            plt.title('Trendline for {}'.format(stock_n))
+            sns.lineplot(x='Date',y='Close',data=stock_data)
+            plt.show()
+            st.pyplot()
+
+
 
     def share_worth(self):
         self.consolidated_price['worth'] = self.consolidated_price['Holding']*self.consolidated_price['Close']*self.consolidated_price['Currency']
         return self.consolidated_price
+
 dictionary = {'3182.KL':{'Name':'Genting','Unit':800,'currency':1},\
               '0176.KL':{'Name':'Krono','Unit':6600,'currency':1},\
               '5236.KL':{'Name':'Matrix','Unit':2500,'currency':1},\
@@ -76,22 +92,12 @@ dictionary = {'3182.KL':{'Name':'Genting','Unit':800,'currency':1},\
 
 
 def app():
-    # st.sidebar.selectbox('Select passes sequence for Ajax team to view Chain', sorted(UEFA_sequence['cluster_naming'].unique()))
-    # st.sidebar.radio("Visualise xG chain" ,('xG chain only','Non-xG chain only','xG and non-xG chain'))
-    # plt.figure(figsize=(20,12))
-    # plt.xticks(rotation=90)
-    # plt.title('Pareto of different passes sequence cluster')
-    # sns.countplot(x='cluster_naming',data=UEFA_sequence,hue='xg_flag',order = UEFA_sequence['cluster_naming'].value_counts().index)
-    # plt.xlabel('Play Style')
-    # plt.show()
-    # st.pyplot()
 
     foreign_stock_list = ['INTC']
     local_stock_list = ['3182.KL','0176.KL','5236.KL','7160.KL','0200.KL','5279.KL','7113.KL']
     stock_calc = stock_calculation(foreign_stock_list=foreign_stock_list,\
                                 local_stock_list=local_stock_list)
     stock_calc.data_pulling(share_dict=dictionary)
+    stock_calc.stock_graph_plotting()
     stock_df = stock_calc.share_worth()
-    print()
-    st.write('In the last updated date of : {} , your current worth is : {} '.format(datetime.today().strftime('%Y-%m-%d'),stock_df['worth'].sum()))
 app()
