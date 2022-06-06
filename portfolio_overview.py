@@ -14,6 +14,8 @@ import warnings
 warnings.filterwarnings('ignore')
 # st.set_option('deprecation.showPyplotGlobalUse', False)
 # st.set_page_config(layout="wide")
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 
 st.markdown("""
 <style>
@@ -54,6 +56,7 @@ class stock_calculation(object):
         return stock_dataframe.reset_index()
     
     def data_pulling(self,share_dict):
+        print(share_dict)
         for ticker in self.yf_pull_list:
             stock_dataframe = self.yf_pull(ticker,date=self.date_execution)
             
@@ -64,40 +67,85 @@ class stock_calculation(object):
         # self.consolidated_price = self.consolidated_price.drop_duplicates(subset=['Name'],keep='last')
         print(self.consolidated_price)
 
+    def trending(self,df):
+        if (df['Close'] - df['Open']) > 0:
+            return 'green'
+        else:
+            return 'red'
+
+
     def stock_graph_plotting(self):
         for stock_n in self.consolidated_price['Name'].unique():
-            stock_data= self.consolidated_price[self.consolidated_price['Name'] == stock_n]
-            plt.figure(figsize=(20,12))
-            plt.xticks(rotation=90)
-            plt.title('Trendline for {}'.format(stock_n))
-            sns.lineplot(x='Date',y='Close',data=stock_data)
-            plt.show()
-            st.pyplot()
+            stock_data = self.consolidated_price[self.consolidated_price['Name'] == stock_n]
+            stock_data = stock_data.set_index('Date')
+        #     plt.figure(figsize=(20,12))
+        #     plt.xticks(rotation=90)
+        #     plt.title('Trendline for {}'.format(stock_n))
+        #     sns.lineplot(x='Date',y='Close',data=stock_data)
+        #     plt.show()
+        #     st.pyplot()
+
+
+            stock_data['tag'] = stock_data.apply(self.trending,axis=1)
+            fig = make_subplots(specs=[[{"secondary_y": True}]])
+            fig.add_trace(
+                        go.Candlestick(
+                            x=stock_data.index,
+                            low=stock_data.Low,
+                            high=stock_data.High,
+                            close=stock_data.Close,
+                            open=stock_data.Open,
+                            increasing_line_color='green',
+                            decreasing_line_color='red'
+                        )
+            )
+            # fig.add_trace(go.Bar(x=analysis_df.index, y=analysis_df['Volume'],marker={'color': analysis_df['tag']}),secondary_y=True)
+
+
+            fig.update_layout(
+                title = f'{stock_n}',
+                yaxis_title = f'Candle stick graph {stock_n} Price (Ringgit Malaysia)',
+                xaxis_title = 'Date'
+            )
+            st.plotly_chart(fig,use_container_width=True)
 
 
 
     def share_worth(self):
         self.consolidated_price['worth'] = self.consolidated_price['Holding']*self.consolidated_price['Close']*self.consolidated_price['Currency']
-        return self.consolidated_price
+        self.consolidated_price = self.consolidated_price.reset_index()
+        portfolio_nettworth = self.consolidated_price.groupby('Date').agg('sum')
+        self.consolidated_price = self.consolidated_price.set_index('Date')
+
+        return self.consolidated_price,portfolio_nettworth
 
 dictionary = {'3182.KL':{'Name':'Genting','Unit':800,'currency':1},\
               '0176.KL':{'Name':'Krono','Unit':6600,'currency':1},\
-              '5236.KL':{'Name':'Matrix','Unit':2500,'currency':1},\
               '7160.KL':{'Name':'Penta','Unit':300,'currency':1},\
               '0200.KL':{'Name':'Revenue','Unit':9000,'currency':1},\
               '5279.KL':{'Name':'Serbadk','Unit':2200,'currency':1},\
               '7113.KL':{'Name':'TopGlove','Unit':400,'currency':1},
-             'INTC':{'Name':'Intel','Unit':88,'currency':4.1}}
+             'INTC':{'Name':'Intel','Unit':68,'currency':4.1}}
 
 
 
 def app():
 
+    # Issue with nettworth on foreign investment on public holiday.
+
     foreign_stock_list = ['INTC']
-    local_stock_list = ['3182.KL','0176.KL','5236.KL','7160.KL','0200.KL','5279.KL','7113.KL']
+    local_stock_list = ['3182.KL','0176.KL','7160.KL','0200.KL','5279.KL','7113.KL']
     stock_calc = stock_calculation(foreign_stock_list=foreign_stock_list,\
                                 local_stock_list=local_stock_list)
     stock_calc.data_pulling(share_dict=dictionary)
     stock_calc.stock_graph_plotting()
-    stock_df = stock_calc.share_worth()
+    stock_df,portfolio_nettw = stock_calc.share_worth()
+    print(portfolio_nettw)
+    plt.figure(figsize=(20,12))
+    plt.xticks(rotation=90)
+    plt.title('Trendline for portfolio nettworth')
+    sns.lineplot(x='Date',y='worth',data=portfolio_nettw)
+    plt.show()
+    st.pyplot()
+
 app()
