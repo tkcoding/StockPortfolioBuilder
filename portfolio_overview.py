@@ -77,14 +77,7 @@ class stock_calculation(object):
     def stock_graph_plotting(self):
         for stock_n in self.consolidated_price['Name'].unique():
             stock_data = self.consolidated_price[self.consolidated_price['Name'] == stock_n]
-            stock_data = stock_data.set_index('Date')
-        #     plt.figure(figsize=(20,12))
-        #     plt.xticks(rotation=90)
-        #     plt.title('Trendline for {}'.format(stock_n))
-        #     sns.lineplot(x='Date',y='Close',data=stock_data)
-        #     plt.show()
-        #     st.pyplot()
-
+            # stock_data = stock_data.set_index('Date')
 
             stock_data['tag'] = stock_data.apply(self.trending,axis=1)
             fig = make_subplots(specs=[[{"secondary_y": True}]])
@@ -138,7 +131,6 @@ def app():
     stock_calc = stock_calculation(foreign_stock_list=foreign_stock_list,\
                                 local_stock_list=local_stock_list)
     stock_calc.data_pulling(share_dict=dictionary)
-    stock_calc.stock_graph_plotting()
     stock_df,portfolio_nettw = stock_calc.share_worth()
     print(portfolio_nettw)
     plt.figure(figsize=(20,12))
@@ -147,5 +139,6 @@ def app():
     sns.lineplot(x='Date',y='worth',data=portfolio_nettw)
     plt.show()
     st.pyplot()
+    stock_calc.stock_graph_plotting()
 
 app()
