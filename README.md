@@ -14,3 +14,7 @@ Advance stage:
 
 Streamlit App photo
 ![StreamlitApp](img/PortfolioStreamlitApp.pngg)
+
+Command to run : 
+1. pip -r install requirements.txt
+2. streamlit run portfolio_overview.py
