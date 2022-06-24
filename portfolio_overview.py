@@ -112,13 +112,12 @@ class stock_calculation(object):
 
         return self.consolidated_price,portfolio_nettworth
 
-dictionary = {'3182.KL':{'Name':'Genting','Unit':800,'currency':1},\
+dictionary = {'3182.KL':{'Name':'Genting','Unit':200,'currency':1},\
               '0176.KL':{'Name':'Krono','Unit':6600,'currency':1},\
               '7160.KL':{'Name':'Penta','Unit':300,'currency':1},\
               '0200.KL':{'Name':'Revenue','Unit':9000,'currency':1},\
               '5279.KL':{'Name':'Serbadk','Unit':2200,'currency':1},\
-              '7113.KL':{'Name':'TopGlove','Unit':400,'currency':1},
-             'INTC':{'Name':'Intel','Unit':68,'currency':4.1}}
+              '7113.KL':{'Name':'TopGlove','Unit':400,'currency':1},}
 
 
 
@@ -126,7 +125,7 @@ def app():
 
     # Issue with nettworth on foreign investment on public holiday.
 
-    foreign_stock_list = ['INTC']
+    foreign_stock_list = []
     local_stock_list = ['3182.KL','0176.KL','7160.KL','0200.KL','5279.KL','7113.KL']
     stock_calc = stock_calculation(foreign_stock_list=foreign_stock_list,\
                                 local_stock_list=local_stock_list)

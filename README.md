@@ -1,5 +1,5 @@
 # StockPortfolioBuilder
-Automate portfolio analysis and information 
+Automate portfolio analysis and information.
 - Create Yahoo finance or any needed financial data pulling 
 - Add on scraping if needed
 - Create analytics view of all stock with basic function like current PNL (Profit n Loss)
@@ -10,3 +10,7 @@ Automate portfolio analysis and information
 Advance stage:
 - Add in signal detector and action taken according to volume . This can be borrowed from previous deep learning action learning or detecting buy and sell signal as what expert has mentioned.
 - Shows actions suggest and actual trend happened for each stock.
+
+
+Streamlit App photo
+![StreamlitApp](img/PortfolioStreamlitApp.pngg)
