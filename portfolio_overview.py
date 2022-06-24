@@ -63,6 +63,7 @@ class stock_calculation(object):
             stock_dataframe['Name'] = share_dict[ticker]['Name']
             stock_dataframe['Currency'] = share_dict[ticker]['currency']
             stock_dataframe['Holding'] = share_dict[ticker]['Unit']
+            stock_dataframe['PurchasePrice'] = share_dict[ticker]['buy_price']
             self.consolidated_price = pd.concat([self.consolidated_price,pd.DataFrame(stock_dataframe)],axis=0)
         # self.consolidated_price = self.consolidated_price.drop_duplicates(subset=['Name'],keep='last')
         print(self.consolidated_price)
@@ -106,19 +107,21 @@ class stock_calculation(object):
 
     def share_worth(self):
         self.consolidated_price['worth'] = self.consolidated_price['Holding']*self.consolidated_price['Close']*self.consolidated_price['Currency']
+        self.consolidated_price['purchasePrice'] = self.consolidated_price['Holding']*self.consolidated_price['PurchasePrice']*self.consolidated_price['Currency']
+        self.consolidated_price['PNL'] = self.consolidated_price['worth'] - self.consolidated_price['purchasePrice']
         self.consolidated_price = self.consolidated_price.reset_index()
         portfolio_nettworth = self.consolidated_price.groupby('Date').agg('sum')
         self.consolidated_price = self.consolidated_price.set_index('Date')
 
         return self.consolidated_price,portfolio_nettworth
 
-dictionary = {'3182.KL':{'Name':'Genting','Unit':200,'currency':1},\
-              '0176.KL':{'Name':'Krono','Unit':6600,'currency':1},\
-              '7160.KL':{'Name':'Penta','Unit':300,'currency':1},\
-              '0200.KL':{'Name':'Revenue','Unit':9000,'currency':1},\
-              '5279.KL':{'Name':'Serbadk','Unit':2200,'currency':1},\
-              '7113.KL':{'Name':'TopGlove','Unit':400,'currency':1},}
-
+#TODO: Need to turn this into json file or input
+share_dictionary = {'3182.KL':{'Name':'Genting','Unit':200,'currency':1,'buy_price':4.58},\
+              '0176.KL':{'Name':'Krono','Unit':6600,'currency':1,'buy_price':0.649},\
+              '7160.KL':{'Name':'Penta','Unit':300,'currency':1,'buy_price':6.18},\
+              '0200.KL':{'Name':'Revenue','Unit':12400,'currency':1,'buy_price':1.86},\
+              '5279.KL':{'Name':'Serbadk','Unit':2200,'currency':1,'buy_price':0.94},\
+              '7113.KL':{'Name':'TopGlove','Unit':400,'currency':1,'buy_price':3.49}}
 
 
 def app():
@@ -129,13 +132,14 @@ def app():
     local_stock_list = ['3182.KL','0176.KL','7160.KL','0200.KL','5279.KL','7113.KL']
     stock_calc = stock_calculation(foreign_stock_list=foreign_stock_list,\
                                 local_stock_list=local_stock_list)
-    stock_calc.data_pulling(share_dict=dictionary)
+    stock_calc.data_pulling(share_dict=share_dictionary)
     stock_df,portfolio_nettw = stock_calc.share_worth()
-    print(portfolio_nettw)
+    # Nettworth plotting
     plt.figure(figsize=(20,12))
     plt.xticks(rotation=90)
     plt.title('Trendline for portfolio nettworth')
     sns.lineplot(x='Date',y='worth',data=portfolio_nettw)
+    sns.lineplot(x='Date',y='PNL',data=portfolio_nettw)
     plt.show()
     st.pyplot()
     stock_calc.stock_graph_plotting()
